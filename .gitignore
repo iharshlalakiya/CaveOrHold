@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+*.pyc
+caveorhold/logs/*.json
+caveorhold/logs/*.csv
+.hf_cache/
