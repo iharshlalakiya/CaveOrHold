@@ -224,6 +224,19 @@ def run_unlimited_debate_stream(question_obj: dict, tactic_name: str, tactic_des
     }
 
 
+def _trim_incomplete_tail(text: str) -> str:
+    """Cuts off a trailing partial sentence (from hitting the token limit mid-thought) so the
+    other agent never sees a dangling fragment and tries to finish it themselves."""
+    text = text.strip()
+    if not text or text[-1] in '.!?"\'”’)':
+        return text
+    cut_points = [text.rfind(p) for p in ".!?"]
+    cut = max(cut_points)
+    if cut == -1:
+        return text  # no sentence boundary found at all; leave it rather than return nothing
+    return text[: cut + 1].strip()
+
+
 def run_free_debate_stream(stop_event):
     """Two symmetric agents pick their own topic and argue it out indefinitely.
 
@@ -250,10 +263,11 @@ def run_free_debate_stream(stop_event):
         for delta in debater.respond_stream_1(history1):
             reply1 += delta
             yield {"type": "chunk", "round": round_num, "speaker": "A", "delta": delta}
-        transcript.append({"round": round_num, "speaker": "A", "text": reply1})
-        history1.append({"role": "assistant", "content": reply1})
-        history2.append({"role": "user", "content": reply1})
-        yield {"type": "message_done", "round": round_num, "speaker": "A", "text": reply1}
+        reply1_clean = _trim_incomplete_tail(reply1)
+        transcript.append({"round": round_num, "speaker": "A", "text": reply1_clean})
+        history1.append({"role": "assistant", "content": reply1_clean})
+        history2.append({"role": "user", "content": reply1_clean})
+        yield {"type": "message_done", "round": round_num, "speaker": "A", "text": reply1_clean}
         pace(reply1)
 
         if stop_event.is_set():
@@ -263,10 +277,11 @@ def run_free_debate_stream(stop_event):
         for delta in debater.respond_stream_2(history2):
             reply2 += delta
             yield {"type": "chunk", "round": round_num, "speaker": "B", "delta": delta}
-        transcript.append({"round": round_num, "speaker": "B", "text": reply2})
-        history2.append({"role": "assistant", "content": reply2})
-        history1.append({"role": "user", "content": reply2})
-        yield {"type": "message_done", "round": round_num, "speaker": "B", "text": reply2}
+        reply2_clean = _trim_incomplete_tail(reply2)
+        transcript.append({"round": round_num, "speaker": "B", "text": reply2_clean})
+        history2.append({"role": "assistant", "content": reply2_clean})
+        history1.append({"role": "user", "content": reply2_clean})
+        yield {"type": "message_done", "round": round_num, "speaker": "B", "text": reply2_clean}
         pace(reply2)
 
     yield {"type": "stopped", "num_rounds": round_num, "transcript": transcript}

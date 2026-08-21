@@ -414,9 +414,22 @@ def index():
             findOpenMessage(speaker, round).text += delta;
           }
 
-          function closeMessage(speaker, round) {
+          function closeMessage(speaker, round, finalText) {
             if (locked) return;
-            findOpenMessage(speaker, round).closed = true;
+            const m = findOpenMessage(speaker, round);
+            m.closed = true;
+            // The server may send back a trimmed version (e.g. cut a dangling half-sentence) —
+            // sync the bubble to that instead of the raw streamed text.
+            if (typeof finalText === 'string' && finalText.length < m.text.length) {
+              m.text = finalText;
+              if (m.revealed > finalText.length) {
+                m.revealed = finalText.length;
+                if (m.bubbleEl) {
+                  const span = m.bubbleEl.querySelector('.text');
+                  if (span) span.textContent = finalText;
+                }
+              }
+            }
           }
 
           function tick() {
@@ -536,7 +549,7 @@ def index():
             } else if (data.type === 'chunk') {
               renderer.pushChunk(data.speaker, data.round, data.delta);
             } else if (data.type === 'message_done') {
-              renderer.closeMessage(data.speaker, data.round);
+              renderer.closeMessage(data.speaker, data.round, data.text);
             } else if (data.type === 'stopped') {
               // Fallback in case this arrives before the user's own click already handled it.
               renderer.requestStopAfterCurrent(finishStop);

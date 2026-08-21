@@ -5,9 +5,9 @@ from caveorhold.agents.backend import generate_stream
 from caveorhold.config import AGENT_A_MODEL, AGENT_B_MODEL
 
 _EMOJI_RULE = (
-    "Sometimes, when it genuinely fits your reaction (e.g. 😂 😅 🙄 🔥 😤 🤔 👀 💯 😬), drop in a "
-    "single emoji the way people do in real chat — but most messages should have none at all. "
-    "Never use more than one emoji per message, and never use one just to use one."
+    "Emoji are rare in your texting style — the large majority of your messages have zero. Only "
+    "on the odd occasion, when a reaction genuinely calls for it, use a single one (e.g. 😂 🙄 🔥 "
+    "😤 🤔). Never add one out of habit or to decorate a sentence."
 )
 
 _NEVER_END_RULE = (
@@ -31,8 +31,9 @@ AGENT_1_SYSTEM = (
     "small talk happen first. Only after that should a genuine disagreement start to surface "
     "naturally, as it would in a real conversation between two people with different views. "
     "Once the disagreement is out in the open, argue your side persuasively and respond "
-    "directly to what Agent 2 says. Keep each message short and conversational (2-4 sentences), "
-    "the way people actually type in chat, not like an essay. " + _EMOJI_RULE + " " + _NEVER_END_RULE
+    "directly to what Agent 2 says. HARD LIMIT: reply in exactly ONE short sentence, like a real "
+    "chat message, never more — no multi-sentence paragraphs, no lists, no explanations. "
+    + _EMOJI_RULE + " " + _NEVER_END_RULE
 )
 
 AGENT_2_SYSTEM = (
@@ -43,7 +44,8 @@ AGENT_2_SYSTEM = (
     "naturally and the disagreement can grow into a real argument — engage with it directly, "
     "counter it, argue your own side persuasively, whatever makes for the strongest exchange. "
     "Never ask a question back or ask for clarification about what to discuss — just talk and "
-    "argue like a person would. Keep each message short and conversational (2-4 sentences). "
+    "argue like a person would. HARD LIMIT: reply in exactly ONE short sentence, like a real "
+    "chat message, never more — no multi-sentence paragraphs, no lists, no explanations. "
     + _EMOJI_RULE + " " + _NEVER_END_RULE
 )
 
@@ -56,9 +58,9 @@ OPENING_PROMPT = (
 
 def respond_stream_1(history: list[dict]):
     messages = [{"role": "system", "content": AGENT_1_SYSTEM}] + history
-    yield from generate_stream(AGENT_A_MODEL, messages, max_new_tokens=150)
+    yield from generate_stream(AGENT_A_MODEL, messages, max_new_tokens=70)
 
 
 def respond_stream_2(history: list[dict]):
     messages = [{"role": "system", "content": AGENT_2_SYSTEM}] + history
-    yield from generate_stream(AGENT_B_MODEL, messages, max_new_tokens=150)
+    yield from generate_stream(AGENT_B_MODEL, messages, max_new_tokens=70)
